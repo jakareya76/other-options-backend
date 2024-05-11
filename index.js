@@ -25,10 +25,21 @@ async function run() {
   try {
     const queriesCollections = client.db("options").collection("queries");
 
+    // queries related api
+
+    // get queries
+    app.get("/queries", async (req, res) => {
+      const cursur = queriesCollections.find();
+      const result = await cursur.toArray();
+      res.send(result);
+    });
+
+    // add queries with post
     app.post("/add-queries", async (req, res) => {
       const queries = req.body;
-      const result = await queriesCollections.insertOne(queries);
+      queries.timestamp = new Date();
 
+      const result = await queriesCollections.insertOne(queries);
       res.send(result);
     });
   } finally {
