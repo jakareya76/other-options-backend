@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 
 const app = express();
@@ -38,11 +38,20 @@ async function run() {
     app.get("/user-queries", async (req, res) => {
       const userEmail = req.query;
 
-      console.log(userEmail);
-
       const result = await queriesCollections
         .find({ userEmail: userEmail.email })
         .toArray();
+
+      res.send(result);
+    });
+
+    // get single querie
+    app.get("/querie/:id", async (req, res) => {
+      const id = req.params;
+
+      const query = { _id: new ObjectId(id) };
+
+      const result = await queriesCollections.findOne(query);
 
       res.send(result);
     });
@@ -53,6 +62,27 @@ async function run() {
       queries.timestamp = new Date();
 
       const result = await queriesCollections.insertOne(queries);
+      res.send(result);
+    });
+
+    app.patch("/update-querie", async (req, res) => {
+      const id = req.query.id;
+      const updatedData = req.body.updatedQuerie;
+
+      const filter = { _id: new ObjectId(id) };
+
+      const updateDocument = {
+        $set: {
+          productName: updatedData.productName,
+          productBrand: updatedData.productBrand,
+          photoURL: updatedData.photoURL,
+          queryTitle: updatedData.queryTitle,
+          boycottingReason: updatedData.boycottingReason,
+        },
+      };
+
+      const result = await queriesCollections.updateOne(filter, updateDocument);
+
       res.send(result);
     });
   } finally {
