@@ -34,6 +34,19 @@ async function run() {
       res.send(result);
     });
 
+    // get user queries
+    app.get("/user-queries", async (req, res) => {
+      const userEmail = req.query;
+
+      console.log(userEmail);
+
+      const result = await queriesCollections
+        .find({ userEmail: userEmail.email })
+        .toArray();
+
+      res.send(result);
+    });
+
     // add queries with post
     app.post("/add-queries", async (req, res) => {
       const queries = req.body;
