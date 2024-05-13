@@ -24,6 +24,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     const queriesCollections = client.db("options").collection("queries");
+    const recommendCollections = client.db("options").collection("recommend");
 
     // queries related api
 
@@ -92,6 +93,33 @@ async function run() {
       const query = { _id: new ObjectId(id) };
 
       const result = await queriesCollections.deleteOne(query);
+
+      res.send(result);
+    });
+
+    // recommend api
+
+    app.get("/my-recommendation", async (req, res) => {
+      const email = req.query.email;
+
+      console.log(email);
+
+      res.send("hi");
+    });
+
+    app.post("/add-recommend", async (req, res) => {
+      const product = req.body;
+      const id = product.queryId;
+
+      const query = { _id: new ObjectId(id) };
+
+      const updatedDoc = {
+        $inc: { recommendationCount: +1 },
+      };
+
+      await queriesCollections.updateOne(query, updatedDoc);
+
+      const result = await recommendCollections.insertOne(product);
 
       res.send(result);
     });
