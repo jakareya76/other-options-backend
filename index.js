@@ -85,6 +85,16 @@ async function run() {
 
       res.send(result);
     });
+
+    app.delete("/delete-querie/:id", async (req, res) => {
+      const id = req.params;
+
+      const query = { _id: new ObjectId(id) };
+
+      const result = await queriesCollections.deleteOne(query);
+
+      res.send(result);
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
