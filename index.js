@@ -117,6 +117,16 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/recommendations-for-me", async (req, res) => {
+      const email = req.query.email;
+
+      const filter = { userEmail: email };
+
+      const result = await recommendCollections.find(filter).toArray();
+
+      res.send(result);
+    });
+
     app.post("/add-recommend", async (req, res) => {
       const product = req.body;
       const id = product.queryId;
