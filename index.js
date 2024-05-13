@@ -1,14 +1,22 @@
 const express = require("express");
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const cookieParser = require("cookie-parser");
+
 require("dotenv").config();
 
 const app = express();
 const port = process.env.PORT || 5000;
 
 // middleware
-app.use(cors());
+app.use(cookieParser());
 app.use(express.json());
+app.use(
+  cors({
+    origin: ["http://localhost:5173"],
+    credentials: true,
+  })
+);
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.rgswvir.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -140,6 +148,16 @@ async function run() {
       await queriesCollections.updateOne(query, updatedDoc);
 
       const result = await recommendCollections.insertOne(product);
+
+      res.send(result);
+    });
+
+    app.delete("/delete-recommendation/:id", async (req, res) => {
+      const id = req.params.id;
+
+      const query = { _id: new ObjectId(id) };
+
+      const result = await recommendCollections.deleteOne(query);
 
       res.send(result);
     });
