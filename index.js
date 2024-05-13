@@ -110,9 +110,11 @@ async function run() {
     app.get("/my-recommendation", async (req, res) => {
       const email = req.query.email;
 
-      console.log(email);
+      const filter = { RecommenderEmail: email };
 
-      res.send("hi");
+      const result = await recommendCollections.find(filter).toArray();
+
+      res.send(result);
     });
 
     app.post("/add-recommend", async (req, res) => {
