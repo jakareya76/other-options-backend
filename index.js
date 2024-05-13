@@ -99,6 +99,14 @@ async function run() {
 
     // recommend api
 
+    app.get("/recommendation", async (req, res) => {
+      const id = req?.query?.queryId;
+
+      const result = await recommendCollections.find({ queryId: id }).toArray();
+
+      res.send(result);
+    });
+
     app.get("/my-recommendation", async (req, res) => {
       const email = req.query.email;
 
