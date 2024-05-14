@@ -1,8 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
-
 require("dotenv").config();
 
 const app = express();
@@ -29,6 +29,29 @@ const client = new MongoClient(uri, {
   },
 });
 
+const verifyToken = async (req, res, next) => {
+  const token = req?.cookies?.token;
+
+  if (!token) {
+    return res.status(401).send({ message: "not authorized" });
+  }
+
+  jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded) => {
+    if (err) {
+      return res.status(401).send({ message: "unauthorized access" });
+    }
+
+    req.user = decoded;
+    next();
+  });
+};
+
+const cookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+};
+
 async function run() {
   try {
     const queriesCollections = client.db("options").collection("queries");
@@ -44,12 +67,18 @@ async function run() {
     });
 
     // get user queries
-    app.get("/user-queries", async (req, res) => {
-      const userEmail = req.query;
+    app.get("/user-queries", verifyToken, async (req, res) => {
+      if (req.user.email !== req.query.email) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
 
-      const result = await queriesCollections
-        .find({ userEmail: userEmail.email })
-        .toArray();
+      let query = {};
+
+      if (req.query?.email) {
+        query = { userEmail: req.query.email };
+      }
+
+      const result = await queriesCollections.find(query).toArray();
 
       res.send(result);
     });
@@ -105,8 +134,24 @@ async function run() {
       res.send(result);
     });
 
-    // recommend api
+    // auth related api
+    app.post("/jwt", async (req, res) => {
+      const user = req.body;
 
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN, {
+        expiresIn: "10h",
+      });
+
+      res.cookie("token", token, cookieOptions).send({ success: true });
+    });
+
+    app.post("/logout", async (req, res) => {
+      res
+        .clearCookie("token", { ...cookieOptions, maxAge: 0 })
+        .send({ success: true });
+    });
+
+    // recommend api
     app.get("/recommendation", async (req, res) => {
       const id = req?.query?.queryId;
 
